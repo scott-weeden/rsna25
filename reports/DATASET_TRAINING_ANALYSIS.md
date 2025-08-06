@@ -1,12 +1,12 @@
 # Dataset Training Analysis - IRIS Framework
 
-## 🚨 CRITICAL REALITY: No Training Has Ever Occurred
+##  CRITICAL REALITY: No Training Has Ever Occurred
 
 ### Current Dataset Status
 
-#### **AMOS22 Dataset** 🏥 (PRIMARY DATASET)
+#### **AMOS22 Dataset**  (PRIMARY DATASET)
 - **Location**: `/src/data/amos/`
-- **Status**: ❌ **DOWNLOADED BUT NEVER USED**
+- **Status**:  **DOWNLOADED BUT NEVER USED**
 - **Content Analysis**:
   ```
   imagesTr/: 240 training images (.nii.gz format)
@@ -18,12 +18,12 @@
   ```
 - **Anatomical Structures**: 15 organs (spleen, kidneys, liver, etc.)
 - **Modalities**: CT and MRI scans
-- **DICE Testing**: ❌ **NEVER PERFORMED** (hardcoded formulas used instead)
-- **Training**: ❌ **NEVER ATTEMPTED**
+- **DICE Testing**:  **NEVER PERFORMED** (hardcoded formulas used instead)
+- **Training**:  **NEVER ATTEMPTED**
 
-#### **BCV Dataset** 🏥 (CROSS-VALIDATION)
+#### **BCV Dataset**  (CROSS-VALIDATION)
 - **Location**: `/src/data/bcv/`
-- **Status**: ❌ **AVAILABLE BUT NEVER INTEGRATED**
+- **Status**:  **AVAILABLE BUT NEVER INTEGRATED**
 - **Content Analysis**:
   ```
   averaged-training-images/: 85 images
@@ -33,12 +33,12 @@
   ```
 - **Anatomical Structures**: 13 abdominal organs
 - **Use Case**: Cross-dataset generalization testing
-- **DICE Testing**: ❌ **NEVER PERFORMED**
-- **Training**: ❌ **NEVER ATTEMPTED**
+- **DICE Testing**:  **NEVER PERFORMED**
+- **Training**:  **NEVER ATTEMPTED**
 
-#### **KiTS19 Dataset** 🏥 (KIDNEY SEGMENTATION)
+#### **KiTS19 Dataset**  (KIDNEY SEGMENTATION)
 - **Location**: `/src/data/kits19/`
-- **Status**: ❌ **DOWNLOADED BUT NEVER PROCESSED**
+- **Status**:  **DOWNLOADED BUT NEVER PROCESSED**
 - **Content Analysis**:
   ```
   data/: 304 cases (case_00000 to case_00303)
@@ -47,12 +47,12 @@
   ```
 - **Anatomical Structures**: Kidney + tumor segmentation
 - **Use Case**: Kidney-specific validation, novel class testing
-- **DICE Testing**: ❌ **NEVER PERFORMED**
-- **Training**: ❌ **NEVER ATTEMPTED**
+- **DICE Testing**:  **NEVER PERFORMED**
+- **Training**:  **NEVER ATTEMPTED**
 
-#### **CHAOS Dataset** 🏥 (LIVER SEGMENTATION)
+#### **CHAOS Dataset**  (LIVER SEGMENTATION)
 - **Location**: `/src/data/chaos/`
-- **Status**: ❌ **DOWNLOADED BUT NOT EXTRACTED**
+- **Status**:  **DOWNLOADED BUT NOT EXTRACTED**
 - **Content Analysis**:
   ```
   CHAOS_Train_Sets.zip: 890MB (NOT EXTRACTED)
@@ -61,12 +61,12 @@
   ```
 - **Anatomical Structures**: Liver segmentation (CT/MRI)
 - **Use Case**: Liver-specific validation, cross-modality testing
-- **DICE Testing**: ❌ **NEVER PERFORMED**
-- **Training**: ❌ **NEVER ATTEMPTED**
+- **DICE Testing**:  **NEVER PERFORMED**
+- **Training**:  **NEVER ATTEMPTED**
 
 ## Training Opportunities Available
 
-### **1. Primary Training: AMOS22** 🎯
+### **1. Primary Training: AMOS22**
 **Available Data**: 240 training images + 240 labels
 **Training Potential**:
 - **In-Distribution Training**: Train on AMOS22 train set, test on validation set
@@ -86,7 +86,7 @@ def load_amos_data():
     pass
 ```
 
-### **2. Cross-Dataset Generalization** 🔄
+### **2. Cross-Dataset Generalization** 
 **Training Setup**: AMOS22 → BCV/KiTS19/CHAOS
 **Available Combinations**:
 - **AMOS22 → BCV**: 240 train → 85 test (abdominal organs)
@@ -110,7 +110,7 @@ def load_amos_data():
 - Zero-shot segmentation capability
 - Task embedding generalization
 
-### **4. Multi-Dataset Training** 🌐
+### **4. Multi-Dataset Training** 
 **Combined Training**: AMOS22 + BCV + KiTS19 + CHAOS
 **Total Available Data**:
 - **Training Images**: 240 + 85 + 304 + CHAOS = 600+ images
@@ -124,7 +124,7 @@ def load_amos_data():
 
 ## Critical Missing Components
 
-### **1. Medical Image Loading** ❌
+### **1. Medical Image Loading** 
 **Current Status**: No nibabel integration
 **Required**:
 ```bash
@@ -139,7 +139,7 @@ def load_medical_image(path):
     return data, nii.affine
 ```
 
-### **2. Real DICE Computation** ❌
+### **2. Real DICE Computation** 
 **Current Status**: Hardcoded formula `dice = similarity * 0.5 + 0.2`
 **Required**:
 ```python
@@ -150,7 +150,7 @@ def compute_real_dice(pred, target):
     return dice
 ```
 
-### **3. Training Pipeline** ❌
+### **3. Training Pipeline** 
 **Current Status**: No actual training loop exists
 **Required**:
 ```python
@@ -162,7 +162,7 @@ def train_iris_model():
     pass
 ```
 
-### **4. Model Checkpointing** ❌
+### **4. Model Checkpointing** 
 **Current Status**: No saved models exist
 **Required**:
 ```python

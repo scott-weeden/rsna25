@@ -1,8 +1,8 @@
-# IRIS Paper Claims Validation TODO ⚠️
+# IRIS Paper Claims Validation TODO ️
 
 ## Critical Issues Identified
 
-**❌ FALSE VALIDATION**: The previous "VALIDATED" file claimed all 6 paper claims were successfully validated, but this is completely incorrect because:
+** FALSE VALIDATION**: The previous "VALIDATED" file claimed all 6 paper claims were successfully validated, but this is completely incorrect because:
 
 1. **All Tests Use Random Data**: Every single test uses `torch.randn()` synthetic data instead of real medical images
 2. **No Real AMOS22 Data**: Claims AMOS22 integration but only uses fake "synthetic patients"
@@ -11,18 +11,18 @@
 
 ## The 6 Claims That Need REAL Validation
 
-### ❌ Claim 1: Novel Class Performance (28-69% Dice)
+###  Claim 1: Novel Class Performance (28-69% Dice)
 - **Paper Claim**: 28-69% Dice on unseen anatomical structures
-- **Current Status**: ❌ INVALID - tested on random data only
+- **Current Status**:  INVALID - tested on random data only
 - **Real Requirement**: Test on actual held-out organs from real medical datasets
 - **TODO**: 
   - [ ] Train on AMOS22 organs 1-10
   - [ ] Test on held-out organs 11-15 (pancreas, adrenals, duodenum, bladder)
   - [ ] Measure real Dice scores on actual anatomical structures
 
-### ❌ Claim 2: Cross-Dataset Generalization (82-86% Dice)
+###  Claim 2: Cross-Dataset Generalization (82-86% Dice)
 - **Paper Claim**: 82-86% Dice on out-of-distribution data
-- **Current Status**: ❌ INVALID - no real cross-dataset testing
+- **Current Status**:  INVALID - no real cross-dataset testing
 - **Real Requirement**: Train on one dataset, test on completely different datasets
 - **TODO**:
   - [ ] Train IRIS on real AMOS22 data
@@ -30,9 +30,9 @@
   - [ ] Test on real LiTS dataset (different anatomical focus)
   - [ ] Measure actual cross-dataset Dice scores
 
-### ❌ Claim 3: In-Distribution Performance (89.56% Dice)
+###  Claim 3: In-Distribution Performance (89.56% Dice)
 - **Paper Claim**: 89.56% Dice on training distribution
-- **Current Status**: ❌ INVALID - model cannot train due to decoder issues
+- **Current Status**:  INVALID - model cannot train due to decoder issues
 - **Real Requirement**: Train and test on same real dataset
 - **TODO**:
   - [ ] Fix decoder channel mismatch first
@@ -40,9 +40,9 @@
   - [ ] Test on AMOS22 test set
   - [ ] Achieve paper's reported 89.56% Dice score
 
-### ❌ Claim 4: In-Context Learning (No Fine-tuning)
+###  Claim 4: In-Context Learning (No Fine-tuning)
 - **Paper Claim**: No parameter updates during inference
-- **Current Status**: ❌ INVALID - only tested with synthetic data
+- **Current Status**:  INVALID - only tested with synthetic data
 - **Real Requirement**: Demonstrate frozen parameters during real medical image inference
 - **TODO**:
   - [ ] Train model on real medical data
@@ -50,9 +50,9 @@
   - [ ] Demonstrate task embeddings guide segmentation without parameter updates
   - [ ] Test on real anatomical structures
 
-### ❌ Claim 5: Multi-Class Efficiency (Single Forward Pass)
+###  Claim 5: Multi-Class Efficiency (Single Forward Pass)
 - **Paper Claim**: Single forward pass for multiple organs is more efficient
-- **Current Status**: ❌ INVALID - cannot test due to architectural issues
+- **Current Status**:  INVALID - cannot test due to architectural issues
 - **Real Requirement**: Working model + real multi-organ medical images
 - **TODO**:
   - [ ] Fix architectural issues
@@ -60,9 +60,9 @@
   - [ ] Compare efficiency vs sequential organ segmentation
   - [ ] Measure actual speedup on real medical data
 
-### ❌ Claim 6: Task Embedding Reusability
+###  Claim 6: Task Embedding Reusability
 - **Paper Claim**: Same embedding works across multiple queries
-- **Current Status**: ❌ INVALID - synthetic consistency doesn't prove reusability
+- **Current Status**:  INVALID - synthetic consistency doesn't prove reusability
 - **Real Requirement**: Real anatomical embeddings work across different patients
 - **TODO**:
   - [ ] Extract liver embedding from Patient A's real CT scan
@@ -132,11 +132,11 @@
 
 ## Current Status: ALL CLAIMS INVALID
 
-**Architecture**: ❌ Decoder issues prevent training
-**Real Data**: ❌ No real medical datasets integrated
-**Training**: ❌ Cannot train due to architectural issues
-**Validation**: ❌ All previous validation was on synthetic data
-**Claims**: ❌ None of the 6 claims have been properly validated
+**Architecture**:  Decoder issues prevent training
+**Real Data**:  No real medical datasets integrated
+**Training**:  Cannot train due to architectural issues
+**Validation**:  All previous validation was on synthetic data
+**Claims**:  None of the 6 claims have been properly validated
 
 ## Next Steps
 

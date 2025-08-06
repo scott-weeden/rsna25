@@ -35,9 +35,12 @@ class AMOS22Evaluator:
         config = checkpoint['config']
         
         self.model = IRISModel(
-            in_channels=config['in_channels'],
-            num_classes=config['num_classes'],
-            embed_dim=config['embed_dim']
+            in_channels=config.get('in_channels', 1),
+            base_channels=config.get('base_channels', 32),
+            embed_dim=config.get('embed_dim', 512),
+            num_tokens=config.get('num_tokens', 10),
+            num_classes=config.get('num_classes', 1),
+            num_heads=config.get('num_heads', 8)
         ).to(self.device)
         
         self.model.load_state_dict(checkpoint['model_state_dict'])
@@ -79,7 +82,9 @@ class AMOS22Evaluator:
             if sample['label'] is None:
                 continue
             
-            image = sample['image'].unsqueeze(0).to(self.device)
+            image = sample['image'].to(self.device)
+            if image.dim() == 4:  # If (1, D, H, W), add batch dimension
+                image = image.unsqueeze(0)  # -> (1, 1, D, H, W)
             label = sample['label']
             
             # Process each organ
@@ -98,7 +103,9 @@ class AMOS22Evaluator:
                         predictions = self.model.decoder(query_features, task_embedding)
                 else:
                     # Use same image as reference (self-supervised)
-                    reference_mask = organ_mask.unsqueeze(0).unsqueeze(0).to(self.device)
+                    reference_mask = organ_mask.unsqueeze(0).to(self.device)
+                    if reference_mask.dim() == 4:  # If (1, D, H, W), add batch dimension
+                        reference_mask = reference_mask.unsqueeze(0)  # -> (1, 1, D, H, W)
                     with torch.no_grad():
                         predictions = self.model(image, image, reference_mask)
                 
@@ -137,7 +144,9 @@ class AMOS22Evaluator:
             if query_sample['label'] is None:
                 continue
             
-            query_image = query_sample['image'].unsqueeze(0).to(self.device)
+            query_image = query_sample['image'].to(self.device)
+            if query_image.dim() == 4:  # If (1, D, H, W), add batch dimension
+                query_image = query_image.unsqueeze(0)  # -> (1, 1, D, H, W)
             query_label = query_sample['label']
             
             # Randomly select an organ present in query
@@ -161,15 +170,29 @@ class AMOS22Evaluator:
                 
                 sup_mask = (sup_sample['label'] == target_organ).float()
                 if sup_mask.sum() > 0:
-                    support_images.append(sup_sample['image'].unsqueeze(0))
-                    support_masks.append(sup_mask.unsqueeze(0).unsqueeze(0))
+                    support_image = sup_sample['image']
+                    if support_image.dim() == 4:  # If (1, D, H, W), keep as is
+                        support_images.append(support_image)
+                    else:
+                        support_images.append(support_image.unsqueeze(0))
+                    
+                    support_mask = sup_mask.unsqueeze(0)  # Add channel dimension
+                    if support_mask.dim() == 4:  # If (1, D, H, W), keep as is
+                        support_masks.append(support_mask)
+                    else:
+                        support_masks.append(support_mask.unsqueeze(0))
             
             if len(support_images) == 0:
                 continue
             
             # Use first support as reference
             ref_image = support_images[0].to(self.device)
+            if ref_image.dim() == 4:  # If (1, D, H, W), add batch dimension
+                ref_image = ref_image.unsqueeze(0)  # -> (1, 1, D, H, W)
+            
             ref_mask = support_masks[0].to(self.device)
+            if ref_mask.dim() == 4:  # If (1, D, H, W), add batch dimension
+                ref_mask = ref_mask.unsqueeze(0)  # -> (1, 1, D, H, W)
             
             # Get prediction
             with torch.no_grad():
@@ -179,6 +202,15 @@ class AMOS22Evaluator:
             pred_binary = (torch.sigmoid(predictions) > 0.5).cpu()
             dice = compute_dice_score(pred_binary.squeeze(), query_mask.long())
             episode_scores.append(dice.item())
+        
+        if len(episode_scores) == 0:
+            return {
+                'mean': 0.0,
+                'std': 0.0,
+                'min': 0.0,
+                'max': 0.0,
+                'n_episodes': 0
+            }
         
         return {
             'mean': np.mean(episode_scores),
@@ -196,7 +228,9 @@ class AMOS22Evaluator:
             print("No ground truth available for visualization")
             return
         
-        image = sample['image'].unsqueeze(0).to(self.device)
+        image = sample['image'].to(self.device)
+        if image.dim() == 4:  # If (1, D, H, W), add batch dimension
+            image = image.unsqueeze(0)  # -> (1, 1, D, H, W)
         label = sample['label']
         
         # Get middle slice for visualization
@@ -228,7 +262,9 @@ class AMOS22Evaluator:
                 continue
             
             # Use organ as reference
-            ref_mask = organ_mask.unsqueeze(0).unsqueeze(0).to(self.device)
+            ref_mask = organ_mask.unsqueeze(0).to(self.device)  # Add channel dimension
+            if ref_mask.dim() == 4:  # If (1, D, H, W), add batch dimension
+                ref_mask = ref_mask.unsqueeze(0)  # -> (1, 1, D, H, W)
             
             with torch.no_grad():
                 predictions = self.model(image, image, ref_mask)
@@ -268,13 +304,15 @@ class AMOS22Evaluator:
             if organ_mask.sum() == 0:
                 continue
             
-            ref_mask = organ_mask.unsqueeze(0).unsqueeze(0).to(self.device)
+            ref_mask = organ_mask.unsqueeze(0).to(self.device)  # Add channel dimension
+            if ref_mask.dim() == 4:  # If (1, D, H, W), add batch dimension
+                ref_mask = ref_mask.unsqueeze(0)  # -> (1, 1, D, H, W)
             with torch.no_grad():
                 pred = self.model(image, image, ref_mask)
                 pred_binary = (torch.sigmoid(pred) > 0.5).cpu()
             
             all_predictions.append(pred_binary)
-            all_labels.append(organ_mask.unsqueeze(0).unsqueeze(0))
+            all_labels.append(organ_mask.unsqueeze(0))  # Add channel dimension only
         
         if len(all_predictions) > 0:
             combined_pred = torch.cat(all_predictions, dim=1).max(dim=1)[0]

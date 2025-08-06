@@ -2,9 +2,9 @@ from setuptools import find_namespace_packages
 from setuptools import setup
 
 setup(
-    name='kits23',
-    packages=find_namespace_packages(include=["kits23*"]),
-    version='0.1.4',
+    name='abts25',
+    packages=find_namespace_packages(include=["abts25*"]),
+    version='0.1.5',
     description='',
     zip_safe=False,
     install_requires=[

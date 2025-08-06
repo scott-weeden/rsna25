@@ -57,12 +57,12 @@ These are simple ellipsoids at hard-coded positions, NOT real organ shapes.
 
 | Test File | Uses Synthetic Data | Hard-Coded Results | Real Validation |
 |-----------|-------------------|-------------------|-----------------|
-| `test_phase1_light.py` | ✅ Yes | ✅ Yes | ❌ No |
-| `test_phase2_light.py` | ✅ Yes | ✅ Yes | ❌ No |
-| `test_phase3_complete.py` | ✅ Yes | ✅ Yes | ❌ No |
-| `test_paper_claims.py` | ✅ Yes | ✅ Yes (Dice formula) | ❌ No |
-| `test_paper_claims_part2.py` | ✅ Yes | ✅ Yes | ❌ No |
-| `test_all_paper_claims.py` | ✅ Yes | ✅ Yes | ❌ No |
+| `test_phase1_light.py` |  Yes |  Yes |  No |
+| `test_phase2_light.py` |  Yes |  Yes |  No |
+| `test_phase3_complete.py` |  Yes |  Yes |  No |
+| `test_paper_claims.py` |  Yes |  Yes (Dice formula) |  No |
+| `test_paper_claims_part2.py` |  Yes |  Yes |  No |
+| `test_all_paper_claims.py` |  Yes |  Yes |  No |
 
 ### 5. AMOS Data Available but Unused
 
@@ -77,12 +77,12 @@ The AMOS dataset IS available in `src/data/amos/` with:
 
 All 6 paper claims remain **COMPLETELY UNVALIDATED**:
 
-1. **Novel Class Performance (28-69% Dice)**: ❌ Tested with fake ellipsoids
-2. **Cross-Dataset Generalization (82-86% Dice)**: ❌ No real datasets used
-3. **In-Distribution Performance (89.56% Dice)**: ❌ Synthetic noise only
-4. **In-Context Learning**: ❌ Cannot verify with random data
-5. **Multi-Class Efficiency**: ❌ No real multi-organ segmentation
-6. **Task Embedding Reusability**: ❌ Embeddings from noise are meaningless
+1. **Novel Class Performance (28-69% Dice)**:  Tested with fake ellipsoids
+2. **Cross-Dataset Generalization (82-86% Dice)**:  No real datasets used
+3. **In-Distribution Performance (89.56% Dice)**:  Synthetic noise only
+4. **In-Context Learning**:  Cannot verify with random data
+5. **Multi-Class Efficiency**:  No real multi-organ segmentation
+6. **Task Embedding Reusability**:  Embeddings from noise are meaningless
 
 ## Required Actions
 

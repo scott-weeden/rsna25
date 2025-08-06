@@ -1,6 +1,6 @@
 # IRIS Framework Performance Metrics Tracking
 
-## Current Status: NO REAL METRICS AVAILABLE ❌
+## Current Status: NO REAL METRICS AVAILABLE 
 
 All current "performance metrics" are based on synthetic data and hard-coded formulas. This document outlines what SHOULD be tracked vs what is currently being reported.
 
@@ -95,10 +95,10 @@ specificity = (~pred & ~gt).sum() / (~gt).sum()
 
 ```python
 # From test files - ALL INVALID:
-"✅ Novel class Dice: 45.3%" → Actually: similarity * 0.5 + 0.2
-"✅ Cross-dataset: 84.1%" → Actually: random number
-"✅ In-distribution: 89.2%" → Actually: no real segmentation
-"✅ Efficiency: 1.8x speedup" → Actually: not measured
+" Novel class Dice: 45.3%" → Actually: similarity * 0.5 + 0.2
+" Cross-dataset: 84.1%" → Actually: random number
+" In-distribution: 89.2%" → Actually: no real segmentation
+" Efficiency: 1.8x speedup" → Actually: not measured
 ```
 
 ## Required Implementation for Real Metrics
@@ -152,9 +152,9 @@ When REAL validation is implemented, use this template:
 ### Results
 | Metric | Value | Paper Claim | Status |
 |--------|-------|-------------|---------|
-| Novel Class Dice | X.X% | 28-69% | ❓ |
-| Cross-Dataset Dice | X.X% | 82-86% | ❓ |
-| In-Distribution Dice | X.X% | 89.56% | ❓ |
+| Novel Class Dice | X.X% | 28-69% |  |
+| Cross-Dataset Dice | X.X% | 82-86% |  |
+| In-Distribution Dice | X.X% | 89.56% |  |
 
 ### Per-Organ Results
 [Table with real results]
@@ -168,11 +168,11 @@ When REAL validation is implemented, use this template:
 ## Summary
 
 **CURRENT STATUS**: 
-- ❌ NO real performance metrics available
-- ❌ ALL reported metrics are from synthetic data
-- ❌ Hard-coded formulas instead of actual measurements
-- ❌ AMOS data available but unused
-- ❌ Decoder fixed but not validated with real data
+-  NO real performance metrics available
+-  ALL reported metrics are from synthetic data
+-  Hard-coded formulas instead of actual measurements
+-  AMOS data available but unused
+-  Decoder fixed but not validated with real data
 
 **REQUIRED ACTIONS**:
 1. Implement real data loading from AMOS

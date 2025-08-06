@@ -51,10 +51,10 @@ Decoder Block 4: 32  -> 32,  skip from encoder stage 0 (32 channels)
 ```
 
 **Advantages:**
-- ✅ Maintains symmetric U-Net architecture
-- ✅ Proper gradient flow
-- ✅ Task embedding integration at each scale
-- ✅ Compatible with IRIS framework
+-  Maintains symmetric U-Net architecture
+-  Proper gradient flow
+-  Task embedding integration at each scale
+-  Compatible with IRIS framework
 
 ### 2. Alternative Decoder Architectures (`decoder_alternatives.py`)
 
@@ -215,8 +215,8 @@ At each decoder block:
 
 ## Next Steps
 
-1. **✅ IMMEDIATE**: Implement fixed decoder in IRIS model
-2. **✅ HIGH PRIORITY**: Test end-to-end training on real AMOS22 data
+1. ** IMMEDIATE**: Implement fixed decoder in IRIS model
+2. ** HIGH PRIORITY**: Test end-to-end training on real AMOS22 data
 3. **MEDIUM PRIORITY**: Benchmark against alternative architectures
 4. **LOW PRIORITY**: Optimize for production deployment
 
@@ -224,10 +224,10 @@ At each decoder block:
 
 The channel mismatch issue was a **critical architectural bug** that prevented the IRIS framework from functioning. The fixed decoder resolves this by:
 
-- ✅ **Proper channel alignment** between encoder and decoder
-- ✅ **Correct skip connection mapping** 
-- ✅ **Spatial dimension handling**
-- ✅ **Task embedding integration** at each scale
-- ✅ **End-to-end training capability**
+-  **Proper channel alignment** between encoder and decoder
+-  **Correct skip connection mapping** 
+-  **Spatial dimension handling**
+-  **Task embedding integration** at each scale
+-  **End-to-end training capability**
 
 With this fix, the IRIS framework can now proceed to **real medical data validation** and **paper claims testing**.
