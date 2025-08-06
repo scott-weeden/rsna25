@@ -39,16 +39,13 @@ Thumbs.db
 # Jupyter
 .ipynb_checkpoints/
 
-# Project specific
-peer_review/
-checkpoints_test/
+
 
 # Data directories (if you want to ignore large datasets)
-data/
-datasets/
-checkpoints/
+*.gz
+*.dcm
+*.zip
 logs/
-data.zip
 
 # Model checkpoints
 *.pth
@@ -64,3 +61,5 @@ __init__.py
 *.zip
 AmazonQ.md
 Claude.md
+src/tools/agent.csproj
+.gitignore

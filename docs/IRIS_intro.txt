@@ -1,4 +1,8 @@
-Introduction
+# Abstract
+
+Medical image segmentation remains challenging due to the vast diversity of anatomical structures, imaging modalities, and segmentation tasks. While deep learning has made significant advances, current approaches struggle to generalize as they require task-specific training or fine-tuning on unseen classes. We present Iris, a novel In-context Reference Image guided Segmentation framework that enables flexible adaptation to novel tasks through the use of reference examples without fine-tuning. At its core, Iris features a lightweight context task encoding module that distills task-specific information from reference context image-label pairs. This rich context embedding information is used to guide the segmentation of target objects. By decoupling task encoding from inference, Iris supports diverse strategies from one-shot inference and context example ensemble to object-level context example retrieval and in-context tuning. Through comprehensive evaluation across twelve datasets, we demonstrate that Iris performs strongly compared to task-specific models on in-distribution tasks. On seven held-out datasets, Iris shows superior generalization to out-of-distribution data and unseen classes. Further, Iris's task encoding module can automatically discover anatomical relationships across datasets and modalities, offering insights into medical objects without explicit anatomical supervision.
+
+# Introduction
 
 The accurate segmentation of anatomical structures in medical images is fundamental for clinical practice and biomedical research, enabling precise diagnosis and treatment planning. While deep learning has demonstrated remarkable success, the vast diversity of anatomical structures, imaging modalities, and clinical tasks poses long-standing challenges for developing truly generalizable solutions. Current efforts typically focus on disease-specific tasks or a limited set of anatomical structures, struggling to handle the heterogeneous landscape of medical imaging that spans diverse modalities, body regions, and diseases.
 
@@ -13,3 +17,113 @@ Our main contributions include:
 - A lightweight task encoding module that captures task-specific information from reference examples, handling medical objects of varying sizes and shapes.
 - Multiple flexible inference strategies suitable for different practical scenarios, including one-shot inference, context ensemble, object-level context retrieval, and in-context tuning.
 - Comprehensive experiments on 19 datasets demonstrate Iris's superior performance across both in-distribution and challenging scenarios, particularly on held-out domains and novel anatomical structures. It extends to reveal the capability of automatically discovering meaningful anatomical relationships across datasets and modalities.
+
+# Method
+
+## Problem Definition
+Traditional segmentation approaches follow a task-specific paradigm, where each model is trained for a specific segmentation task. Given a dataset containing image-label pairs, the model learns a direct mapping from the image space to the segmentation mask space, such that for an image, the predicted segmentation mask is given by the model output.
+
+In contrast, we formulate an in-context medical image segmentation framework. Given a support set containing reference image-label pairs and a query image, a single model predicts the segmentation mask for the query image conditioned on the support set. For multi-class segmentation tasks, we decompose the problem into multiple binary segmentation tasks.
+
+## Iris Architecture
+Iris introduces a novel in-context learning architecture that decouples task encoding from segmentation inference. This design comprises two key components: (1) a task encoding module that distills task-specific information from reference examples into compact task embeddings, and (2) a mask decoding module that leverages these task embeddings to guide query image segmentation.
+
+## Task Encoding Module
+Given a reference 3D image-label pair, our task encoding module extracts task representations through two parallel streams to extract comprehensive task representations.
+
+## Foreground feature encoding. 
+Medical data volumes present unique challenges in feature extraction due to the presence of fine boundary details and anatomical structures spanning only a tiny portion of voxels. Direct feature pooling at downsampled resolution can lead to information loss or complete disappearance of these critical regions of interest (ROIs). To address this hurdle, we opt in a high-resolution foreground feature encoding process. Given features extracted by the encoder, where dimensions are downsampled with ratio r, we compute the foreground embedding by pooling the upsampled features masked by the original high-resolution mask. By applying the original high-resolution mask directly to the upsampled features, we ensure a precise capture of fine anatomical details and small structures that are vital for medical object segmentation.
+
+## Contextual feature encoding. 
+The above encoding process extracted foreground features, but lacks important global context information. We encode these contextual information using learnable query tokens. To efficiently process high-resolution features while managing memory constraints, we employ strategy similar to sub-pixel convolution. For feature map, we first expand spatial dimensions while reducing channels using PixelShuffle. After concatenating with the binary mask, we apply a 1×1×1 convolution and PixelUnshuffle to return to the original feature resolution. This approach permits a memory-efficient, high-resolution, feature-mask fusion. The merged features then interact with learnable query tokens through cross-attention and self-attention layers to produce contextual embedding. The final task embedding combines both aspects.
+
+For multi-class segmentation, we generate separate task embeddings for each category. This setting maintains a strong efficiency as the computationally intensive feature extraction is shared across classes while the task encoding module remains lightweight.
+
+## Mask Decoding Module
+The decoder employs a query-based architecture that efficiently handles both single and multi-class segmentation tasks. For a query image with features, the task encoding module generates class-specific embeddings for each class defined in reference image-label pairs. These embeddings are concatenated into a combined task representation, where K is the number of target classes and K=1 for single-class segmentation. The bidirectional cross-attention mechanism processes this representation, where the updated features enable effective information exchange between class-specific task guidance and query image features. The final segmentation mask is predicted in a single forward pass.
+
+## Training
+We train Iris in an end-to-end manner using episodic training to simulate in-context learning scenarios. Each training episode consists of sampling reference-query pairs from the same dataset, computing task embeddings from the reference pair, and final predicting segmentation for the query image. The model is optimized using a combination of Dice and cross-entropy losses. To enhance generalization, we employ data augmentation on both query and reference images, add random perturbation to query images to simulate imperfect references, and randomly drop classes in multi-class datasets to encourage independent class-wise task encoding.
+
+## Flexible Inference Strategies
+After training, Iris supports multiple inference strategies suitable for different practical scenarios.
+
+## Efficient one-shot inference. 
+With just one reference example, Iris first encodes the task into compact embeddings that can be stored and reused across multiple query images. Unlike major in-context learning methods to recompute contextual information for each query image, our design greatly eliminates redundant computation. Moreover, Iris can segment multiple classes in a single forward pass, contrasting with methods that require separate passes per class. The minimal storage requirement of these embeddings makes Iris particularly desirable for large-scale data processing pipelines.
+
+## Context ensemble. 
+For tasks with multiple reference examples, Iris supports context ensemble for improving performance. We compute task embeddings for each example and average them to create a more robust task representation. This simple averaging strategy combines information from multiple references while maintaining computational efficiency. We extent context ensemble for classes seen during training. Specifically, we maintain a class-specific memory bank that continuously updates task embeddings through exponential moving average (EMA) during the training process. This memory bank stores representative task embeddings for each seen class, enabling direct segmentation for seen classes during inference without requiring context encoding.
+
+## Object-level context retrieval. 
+For multi-class segmentation with a pool of reference examples, conventional approaches typically employ image-level retrieval using global embeddings to select semantically similar references. However, this strategy is suboptimal for medical images where multiple anatomical structures coexist, as global embeddings average features across all structures. To enable more precise reference selection, we propose an object-level (class-level) context retrieval strategy. Our approach first encodes class-specific task embeddings for each reference example through our task encoding module - for a reference image with n anatomical classes, we encode n separate task embeddings. For a query image, we obtain initial object segmentation masks using task embeddings from a randomly selected reference. These initial masks are then used to encode n class-specific query task embeddings, which are compared with corresponding reference embeddings in the pool using cosine similarity to select the most similar reference for each class independently. This fine-grained matching allows different structures within the same query image to find their most appropriate references, leading to more accurate segmentation compared to image-level approaches.
+
+## In-context tuning. 
+For scenarios requiring adaptation without a full model fine-tuning, Iris offers a lightweight tuning strategy by optimizing only the task embeddings while keeping the model parameters fixed. This tuning process minimizes the segmentation loss between model predictions and ground truth by updating the task embeddings through the gradient descent. In particular, the optimized embeddings can then be stored and reused for similar cases, offering a practical balance between adaptation capability and computational efficiency.
+
+# Experiment
+
+## Experimental Setup
+We evaluate Iris across three key dimensions: in-distribution performance on trained tasks, out-of-distribution generalization to different domains, and adaptability to novel anatomical classes. Additional experiments analyze Iris's computational efficiency, inference strategies, and architectural design choices.
+
+## Dataset.
+Our training data comprises 12 public datasets spanning diverse body regions (head, chest, abdomen), modalities (CT, MRI, PET), and clinical targets (organs, tissues, lesions), split into 75%/5%/20% for train/validation/test. For out-of-distribution evaluation, we use 5 held-out datasets: ACDC, SegTHOR, and three MRI modalities from IVDM3Seg to evaluate robustness against domain shift; MSD Pancreas (Tumor) and Pelvic1K (Bone) datasets are used for novel class adaptation. We randomly select 20% samples from held-out sets for testing. Detailed dataset information is provided in supplementary materials.
+
+## Baseline Models.
+We compare against four categories of methods:
+(1) Task-specific models: nnUNet;
+(2) Universal models: CLIP-driven model, UniSeg and Multi-Talent;
+(3) Foundation models: SAM and its medical variants, SAM-Med2D, SAM-Med3D;
+(4) In-context learning methods: SegGPT, UniverSeg, and Tyche-IS.
+All models are trained on our curated dataset, except SAM, with 2D models trained on extracted slices and 3D models with 3D volumes. For SAM-based methods, we simulate user interactions using ground-truth labels during training and evaluation.
+
+## Implementation Details.
+Iris uses a 3D UNet encoder trained from scratch with one-shot learning strategy. We employ the Lamb optimizer with exponential learning rate decay (base lr=2×10^-3, weight decay=1×10^-5), training for 80K iterations with batch size 32 and 2K warm-up iterations. Data augmentation includes random cropping, affine transformations, and intensity adjustments. Training and inference use 128×128×128 volume size.
+
+## Results on in-distribution classes.
+We evaluate Iris's performance on twelve diverse medical datasets used during training. Iris achieves state-of-the-art performance with an average Dice score of 84.52%, matching or exceeding task-specific and multi-task models that are optimized for fixed tasks.
+Existing adaptive approaches show significant limitations. SAM-based methods perform poorly due to their strong reliance on simple positional prompts, with the large performance gap between their 2D and 3D variants (40.58% vs. 68.42%) highlighting the importance of 3D context. Existing in-context learning methods, like SegGPT, UniverSeg, (best: 61.20%) struggle particularly with 3D tasks like AMOS and LiTS due to their 2D architecture, though performing better on 2D-friendly tasks like MnM and CSI-Wat. In contrast, Iris's 3D architecture and efficient task encoding enables consistent high-level performance across all tasks while maintaining its adaptability to unseen novel anatomical classes.
+
+## Results on OOD generalization.
+We evaluate out-of-distribution (OOD) performance on five held-out datasets spanning two types of distribution shifts: cross-center variation (ACDC, SegTHOR) and cross-modality adaptation (CSI variants). Iris demonstrates superior performance across all scenarios, particularly excelling in challenging 3D tasks and large domain shifts.
+
+Both task-specific and multi-task universal models show performance degradation, especially failing catastrophically on CSI-fat with a significant domain gap. While SAM-based methods demonstrate their resilience to domain shifts through strong prior knowledge injected from user interactions, their performance remains limited on the volumetric data.
+In-context learning methods retain a good performance with cross-modality adaptation (e.g. on CSI-fat), benefiting from the domain-specific knowledge provided by reference examples. However, a 2D-slice-based architecture (e.g., UniverSeg and Tyche) limits its capability on 3D tasks like SegTHOR. In contrast, Iris's task encoding module efficiently extracts and utilizes 3D domain-specific information from the reference examples.
+
+## Results on novel classes.
+To measure the adaptation performance to completely unseen anatomical structures, we evaluate on MSD Pancreas Tumor and Pelvic datasets. Using only one reference example, Iris achieves 28.28% on MSD Pancreas Tumor and 69.03% on Pelvic segmentation, substantially outperforming other adaptive methods (the best competitor: 11.97% and 61.92% respectively). This performance gain is particularly notable given that traditional task-specific models and multi-task models can not handle these novel classes without retraining. These findings demonstrate Iris's strong capability in learning from very limited examples while maintaining meaningful segmentation quality on previously unseen anatomical structures.
+
+## Efficiency comparison
+We analyze computational efficiency for segmenting m query images with n classes using k reference pairs. Iris achieves superior efficiency through two key designs: decoupling task extraction from inference and handling multiple classes in a single forward pass. This results in complexity of O(k + m) compared to O(kmn) in methods like UniverSeg that process each class separately and recompute reference features for every query.
+
+The table compares real-world inference time and memory usage across methods. While UniverSeg's slice-by-slice processing leads to significant overhead with multiple reference slices, and SAM-Med3D requires iterative user interactions (interaction-time not included), Iris efficiently processes entire 3D volumes all at once. For a scenario of segmenting 10 query volumes with 15 classes using one reference volume, Iris completes in 2 seconds. This efficiency advantage grows with more context examples due to Iris's decoupled architecture eliminating redundant reference processing.
+
+# Analysis
+
+## Inference strategy.
+The figure compares our four inference strategies. In this experiment, we maintain a pool of all available context examples and evaluate each strategy's performance as follows.
+
+Context ensemble randomly selects and averages task embeddings from a percentage of the context pool. When using only one context example (1%), it operates as one-shot inference. Performance of context ensemble keeps improving with more context examples and eventually saturates. This strategy is appealing as task embeddings can be precomputed and ensembled into a single robust embedding, enabling inference speed comparable to regular segmentation models.
+
+Both image and object-level retrieval strategies access the entire context pool but utilize only the top-k percent most similar examples as references. While image-level retrieval compares whole-image features and uses all task embeddings from the same retrieved images, object-level retrieval enables more precise reference selection by matching individual classes. Notably, object-level retrieval surpasses full context ensemble performance when using fewer references (e.g., top 10-20%), as it selectively chooses the most relevant examples for each class rather than averaging all available contexts. To validate robustness to initial context selection, we conducted experiments for 10 times with random selection using different percentages of context samples (1%, 5%, 10%), achieving consistent performance (mean and standard deviation: 68.94±0.83, 71.07±0.27, 72.87±0.10 respectively). This strategy is particularly valuable in clinical settings with large patient databases, where retrieving similar cases as references can enhance segmentation accuracy.
+
+In-context tuning optimizes task embeddings initialized from a random reference. While showing a lower performance with limited samples due to overfitting, it achieves positive results with sufficient tuning data. This approach is well suited for scenarios with both a large context pool and available computational resources for fine-tuning.
+
+Overall, Iris offers usable strategies pertinent to different real-world scenarios. Object-level retrieval is designed for high accuracy while requiring access to a large context pool, e.g. a database of previous patient records. Context ensemble offers a strong efficiency of response time. Finally, in-context tuning is applicable when computational resources and sufficient data support are available.
+
+## Task embedding analysis.
+Iris's task encoding module discovers meaningful anatomical relationships without explicit anatomical supervision, learning solely from binary segmentation masks. From the t-SNE visualization of task embeddings reveals natural clustering of anatomical structures that transcends dataset boundaries and imaging modalities. For example, abdominal organs cluster together despite originating from different datasets and modalities (e.g., AMOS-CT, BCV in CT; AMOS-MR, CHAOS in MRI).
+
+We find that feature embeddings capture clinically meaningful anatomical similarities that were never explicitly taught. Blood vessels like the Inferior Vena Cava (IVC) and Portal/Splenic veins cluster nearby, reflecting their shared tubular structure and similar contrast enhancement patterns in CT. Similarly, the bladder and prostate embeddings show proximity due to their shared soft-tissue characteristics and adjacent anatomical locations. This emergent organization of anatomical concepts demonstrates Iris's ability to automatically distill fundamental anatomical relationships across different segmentation tasks, making it particularly robust for adapting to new anatomical structures.
+
+## Generalization performance vs task quantity.
+We investigate how training data diversity affects Iris's generalization by varying the number of training tasks. The performance on held-out datasets consistently improves with more training tasks, particularly when the training subset encompasses diverse anatomical structures and imaging modalities. We recognize that models trained on datasets spanning body regions (e.g., brain, chest, and abdomen) show a stronger generalization compared to those trained on narrower anatomical ranges. This finding suggests that an exposure to diverse anatomical patterns is necessary towards more robust and transferable feature learning.
+
+## Ablation study.
+The table analyzes three key components of Iris. High-resolution processing proves crucial for small structures, dramatically improving their segmentation performance from 62.13% to 78.92%. While each component contributes independently, their combination achieves the best results across all metrics, demonstrating substantial improvements over partial implementations. Performance improves with more query tokens but saturates at 10 tokens, which we adopt in our final model to balance performance and efficiency.
+
+# Discussion and Conclusion
+
+We introduce Iris as a novel in-context learning framework that enables versatile 3D medical image segmentation through only reference examples. Given just one image-label pair as a reference, Iris can segment arbitrary target classes in test images without any model modification or retraining. Iris reveals strong performance on in-distribution tasks across 12 diverse datasets. Iris's performance is particularly evident to distribution shifts and novel unseen classes on 7 held-out test datasets. The key design of Iris is a decoupled architecture that enables efficient 3D medical image processing and single-pass multi-class segmentation. Iris's inference strategies are suitable for different practical scenarios, from efficient context ensemble-based data processing, high-accuracy object-level context retrieval, to in-context finetuning. Further, Iris's task encoding module offers an appealing means to automatically discover meaningful anatomical relationships purely from segmentation masks, allowing knowledge transfer across different tasks and imaging modalities without explicit anatomical supervision.
+
+## Limitations and future work. 
+While Iris demonstrates promising capabilities, several challenges remain to explore. The diversity of training tasks could impact the out-of-distribution generalization, suggesting a critical need for automated methods to create diverse tasks without manual annotation. Although Iris shows strong adaptability to novel tasks, there remains a performance gap with supervised upper bounds in certain scenarios. Future investigation will focus on narrowing this gap and expanding both training and evaluation schemes to cover a broader spectrum of medical imaging applications.
